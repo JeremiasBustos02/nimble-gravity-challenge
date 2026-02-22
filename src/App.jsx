@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { apiService } from './services/api';
+import { JobList } from './components/JobList';
 import './App.css';
+
+const CANDIDATE_EMAIL = import.meta.env.VITE_CANDIDATE_EMAIL;
 
 function App() {
   const [candidate, setCandidate] = useState(null);
@@ -8,24 +11,22 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const MY_EMAIL = import.meta.env.VITE_CANDIDATE_EMAIL;
-
   useEffect(() => {
     const initApp = async () => {
       try {
         setLoading(true);
-        // Cargar datos del candidato y lista de empleos en paralelo
+        // Las dos llamadas son independientes, las hacemos en paralelo para reducir el tiempo de carga inicial
         const [candidateData, jobsData] = await Promise.all([
-          apiService.getCandidate(MY_EMAIL),
+          apiService.getCandidate(CANDIDATE_EMAIL),
           apiService.getJobs()
         ]);
-        // Guardar los datos en el estado
+
         setCandidate(candidateData);
         setJobs(jobsData);
+
       } catch (err) {
         setError(err.message);
       } finally {
-        // Independientemente de si hubo error o no, dejamos de mostrar el loader
         setLoading(false);
       }
     };
@@ -33,7 +34,6 @@ function App() {
     initApp();
   }, []);
 
-  // Renderizado condicional basado en el estado de carga y errores
   if (loading) return <div className="loader">Cargando desafío...</div>;
   if (error) return <div className="error-message">Error: {error}</div>;
 
@@ -47,8 +47,8 @@ function App() {
       </header>
 
       <main>
-        {/* Acá renderizaremos la lista de empleos */}
-        <pre>{JSON.stringify(jobs, null, 2)}</pre>
+        <h2>Posiciones Abiertas</h2>
+        <JobList jobs={jobs} candidate={candidate} />
       </main>
     </div>
   );
